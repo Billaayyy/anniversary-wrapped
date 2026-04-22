@@ -27,9 +27,9 @@ import photo4 from "@/assets/images/photo-4.png";
 // 💝 EDIT THESE VARIABLES TO PERSONALIZE THE WRAPPED EXPERIENCE
 // ============================================================================
 const CONFIG = {
-  herName: "Sarah",
-  yourName: "Alex",
-  anniversaryDate: "2021-04-22", // YYYY-MM-DD
+  herName: "Jena",
+  yourName: "Billy",
+  anniversaryDate: "2023-04-25", // YYYY-MM-DD
   
   // Slide 2: Top Songs (Title + Artist)
   topSongs: [
@@ -75,32 +75,32 @@ const CONFIG = {
 
   // Slides 7-9: Stats
   stats: [
-    { label: "Texts sent saying 'I miss you'", value: 14205, punchline: "And I meant it every single time." },
-    { label: "TikToks shared", value: 38491, punchline: "Mostly cats and recipes we'll never make." },
-    { label: "Kilometers traveled together", value: 8432, punchline: "And I'd walk 10,000 more just to see you smile." },
+    { label: "Texts sent saying 'I Love You'", value: 14205, punchline: "And I meant it every single time." },
+    { label: "Reels, Shorts shared", value: 38491, punchline: "Mostly cats, cars, cute things and recipes that i said i can make that, but i can't." },
+    { label: "Kilometers traveled together", value: 28765, punchline: "And I'd walk 10,000 more just to see you smile." },
   ],
 
   topMoments: [
-    "That night in Chicago",
-    "Getting lost in the rain",
-    "The burnt dinner incident",
-    "Moving in together",
-    "Every lazy Sunday morning",
+    "Goofing around",
+    "Camping on (RV There Yet?)",
+    "The hair bangs incident",
+    "Moving in to new house",
+    "Every lazy weekend hangout",
   ],
   loveSoundsLike: "Late night drives, early morning coffees, and uncontrollable laughter.",
   habits: [
-    "Stealing the covers",
-    "Sending 100 TikToks a day",
-    "Saying 'I love you' first",
+    "Scratching my hands",
+    "Sending 1000+ Reels a day",
+    "Saying 'Cina' to my face",
   ],
   closingMessage: "To my favorite person. Thank you for the best 3 years of my life. Here's to a lifetime more.",
 
   // Slide: Achievements unlocked together (checklist)
   achievements: [
-    "Survived our first big fight",
-    "Adopted our first plant (and kept it alive)",
+    "Survived Covid-19",
+    "Adopted our first plant (and kept it alive)", //change it idk with what
     "Built a thousand inside jokes",
-    "Learned every one of each other's coffee orders",
+    "Learned every one of each other's attack moves",
     "Met the families",
     "Planned a future together",
   ],
