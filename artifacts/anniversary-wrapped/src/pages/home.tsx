@@ -182,7 +182,7 @@ function PolaroidsSlide({ bg, text, photos }: { bg: string; text: string; photos
           >
             {[...photos, ...photos].map((photo, i) => (
               <div key={`l-${i}`} className="bg-white p-2 pb-6 shadow-xl rounded-sm rotate-[-4deg]">
-                <img src={photo.image} alt="" loading="lazy" decoding="async" className="w-full aspect-[3/4] object-cover" />
+                <img src={photo.image} alt="" loading="lazy" decoding="async" className="w-full aspect-square object-cover" />
               </div>
             ))}
           </div>
@@ -194,7 +194,7 @@ function PolaroidsSlide({ bg, text, photos }: { bg: string; text: string; photos
           >
             {[...photos.slice().reverse(), ...photos.slice().reverse()].map((photo, i) => (
               <div key={`r-${i}`} className="bg-white p-2 pb-6 shadow-xl rounded-sm rotate-[4deg]">
-                <img src={photo.image} alt="" loading="lazy" decoding="async" className="w-full aspect-[3/4] object-cover" />
+                <img src={photo.image} alt="" loading="lazy" decoding="async" className="w-full aspect-square object-cover" />
               </div>
             ))}
           </div>
@@ -276,8 +276,8 @@ function PolaroidsSlide({ bg, text, photos }: { bg: string; text: string; photos
               className="absolute inset-0 flex flex-col items-center justify-center"
               style={{ zIndex: i + 5, willChange: "transform" }}
             >
-              <div className="bg-white p-3 pb-10 rounded-sm shadow-2xl w-3/4 aspect-[3/4] flex flex-col">
-                <img src={photo.image} alt={photo.caption} loading="lazy" decoding="async" className="w-full flex-1 object-cover" />
+              <div className="bg-white p-3 pb-8 rounded-sm shadow-2xl w-3/4 flex flex-col">
+                <img src={photo.image} alt={photo.caption} loading="lazy" decoding="async" className="w-full aspect-square object-cover" />
                 <p className="mt-3 text-center font-bold text-xs font-sans text-black">{photo.caption}</p>
               </div>
             </motion.div>
@@ -534,8 +534,8 @@ export default function Home() {
         <div
           ref={containerRef}
           onScroll={handleScroll}
-          className="w-full h-full overflow-y-auto snap-y snap-mandatory hide-scrollbar relative z-10"
-          style={{ scrollBehavior: "smooth" }}
+          className="w-full h-full overflow-y-auto overflow-x-hidden snap-y snap-mandatory hide-scrollbar relative z-10"
+          style={{ scrollBehavior: "smooth", touchAction: "pan-y", overscrollBehaviorX: "none" }}
         >
           {/* Slide 0: Intro */}
           <div className="w-full h-full snap-center snap-always flex flex-col justify-center p-8 shrink-0 relative overflow-hidden" style={{ backgroundColor: SLIDES[0].bg, color: SLIDES[0].text }}>
