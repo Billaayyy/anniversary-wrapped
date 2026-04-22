@@ -1,19 +1,87 @@
 import { useState, useRef, useEffect, useMemo } from "react";
-import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
+import { motion, useScroll, useTransform, AnimatePresence, useSpring, useInView } from "framer-motion";
 import confetti from "canvas-confetti";
 import { Button } from "@/components/ui/button";
+
+// Import generated images
+import album1 from "@/assets/images/album-1.png";
+import album2 from "@/assets/images/album-2.png";
+import album3 from "@/assets/images/album-3.png";
+import album4 from "@/assets/images/album-4.png";
+import album5 from "@/assets/images/album-5.png";
+
+import artist1 from "@/assets/images/artist-1.png";
+import artist2 from "@/assets/images/artist-2.png";
+import artist3 from "@/assets/images/artist-3.png";
+import artist4 from "@/assets/images/artist-4.png";
+import artist5 from "@/assets/images/artist-5.png";
+
+import soundTownBg from "@/assets/images/sound-town.png";
+
+import photo1 from "@/assets/images/photo-1.png";
+import photo2 from "@/assets/images/photo-2.png";
+import photo3 from "@/assets/images/photo-3.png";
+import photo4 from "@/assets/images/photo-4.png";
 
 // ============================================================================
 // 💝 EDIT THESE VARIABLES TO PERSONALIZE THE WRAPPED EXPERIENCE
 // ============================================================================
 const CONFIG = {
-  herName: "[Her Name]",
-  yourName: "[Your Name]",
+  herName: "Sarah",
+  yourName: "Alex",
   anniversaryDate: "2021-04-22", // YYYY-MM-DD
+  
+  // Slide 2: Top Songs (Title + Artist)
+  topSongs: [
+    { title: "Midnight City Drives", artist: "Just Us", cover: album1 },
+    { title: "Sunday Morning Coffee", artist: "The Lazy Weekends", cover: album2 },
+    { title: "Laughing Too Loud", artist: "Inside Jokes", cover: album3 },
+    { title: "Holding Hands In Public", artist: "Unabashed", cover: album4 },
+    { title: "Forever & Always", artist: "Us", cover: album5 },
+  ],
+
+  // Slide 3: Top Artists (Moods/Seasons of the relationship)
+  topArtists: [
+    { name: "Summer of 2023", streams: "8,402", image: artist1 },
+    { name: "Late Night Talks", streams: "6,210", image: artist2 },
+    { name: "Autumn Walks", streams: "5,930", image: artist3 },
+    { name: "Rainy Movie Days", streams: "4,105", image: artist4 },
+    { name: "Spring Picnics", streams: "3,890", image: artist5 },
+  ],
+
+  // Slide 4: Now Playing
+  nowPlaying: {
+    song: "You & Me",
+    artist: "The Rest of Our Lives",
+    cover: album1
+  },
+
+  // Slide 5: Sound Town
+  soundTown: {
+    city: "Paris, France",
+    description: "Your love sounds like golden hours along the Seine and midnight crepes.",
+    bg: soundTownBg
+  },
+
+  // Slide 6: Polaroids
+  photos: [
+    { image: photo1, caption: "That first sunset." },
+    { image: photo2, caption: "Always holding on." },
+    { image: photo3, caption: "Our usual spot." },
+    { image: photo4, caption: "Getting lost together." },
+  ],
+
+  // Slides 7-9: Stats
+  stats: [
+    { label: "Texts sent saying 'I miss you'", value: 14205, punchline: "And I meant it every single time." },
+    { label: "TikToks shared", value: 38491, punchline: "Mostly cats and recipes we'll never make." },
+    { label: "Kilometers traveled together", value: 8432, punchline: "And I'd walk 10,000 more just to see you smile." },
+  ],
+
   topMoments: [
-    "That night in [City]",
-    "Getting lost in [Place]",
-    "The [Funny Event] incident",
+    "That night in Chicago",
+    "Getting lost in the rain",
+    "The burnt dinner incident",
     "Moving in together",
     "Every lazy Sunday morning",
   ],
@@ -28,15 +96,48 @@ const CONFIG = {
 // ============================================================================
 
 const SLIDES = [
-  { id: "intro", bg: "#FF007F", text: "#FFFFFF" },
+  { id: "intro", bg: "#1DB954", text: "#FFFFFF" }, // Spotify Green
   { id: "days", bg: "#4A00FF", text: "#00FFC4" },
-  { id: "minutes", bg: "#FF4D00", text: "#FFF000" },
-  { id: "sounds", bg: "#00E5FF", text: "#001AFF" },
-  { id: "moments", bg: "#B500FF", text: "#FFB000" },
-  { id: "habits", bg: "#FFD700", text: "#FF0055" },
+  { id: "top-songs", bg: "#282828", text: "#FFFFFF" },
+  { id: "top-artists", bg: "#FF007F", text: "#FFFFFF" },
+  { id: "now-playing", bg: "#121212", text: "#1DB954" },
+  { id: "sound-town", bg: "#000000", text: "#FFFFFF" },
+  { id: "polaroids", bg: "#F4F4F4", text: "#121212" },
+  { id: "stat-1", bg: "#FF4D00", text: "#FFF000" },
+  { id: "stat-2", bg: "#00E5FF", text: "#001AFF" },
+  { id: "stat-3", bg: "#B500FF", text: "#FFB000" },
+  { id: "moments", bg: "#FFD700", text: "#FF0055" },
+  { id: "habits", bg: "#1A1A1A", text: "#1DB954" },
   { id: "quiet", bg: "#1A1A1A", text: "#E5E5E5" },
-  { id: "finale", bg: "#FFFFFF", text: "#FF007F" },
+  { id: "finale", bg: "#1DB954", text: "#FFFFFF" },
 ];
+
+function AnimatedCounter({ value, duration = 2 }: { value: number, duration?: number }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const inView = useInView(ref, { once: true, margin: "-100px" });
+  
+  useEffect(() => {
+    if (!inView) return;
+    let startTimestamp: number;
+    const step = (timestamp: number) => {
+      if (!startTimestamp) startTimestamp = timestamp;
+      const progress = Math.min((timestamp - startTimestamp) / (duration * 1000), 1);
+      // easeOutExpo
+      const easeProgress = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
+      if (ref.current) {
+        ref.current.innerText = Math.floor(easeProgress * value).toLocaleString();
+      }
+      if (progress < 1) {
+        window.requestAnimationFrame(step);
+      } else {
+        if(ref.current) ref.current.innerText = value.toLocaleString();
+      }
+    };
+    window.requestAnimationFrame(step);
+  }, [value, duration, inView]);
+
+  return <span ref={ref}>0</span>;
+}
 
 export default function Home() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -56,49 +157,44 @@ export default function Home() {
     return Math.floor(diff / (1000 * 60 * 60 * 24));
   }, []);
 
-  const minutesTogether = daysTogether * 24 * 60;
-
   const triggerConfetti = () => {
     const duration = 3 * 1000;
     const animationEnd = Date.now() + duration;
     const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
-
     const randomInRange = (min: number, max: number) => Math.random() * (max - min) + min;
 
     const interval: any = setInterval(function () {
       const timeLeft = animationEnd - Date.now();
-
       if (timeLeft <= 0) {
         return clearInterval(interval);
       }
-
       const particleCount = 50 * (timeLeft / duration);
       confetti({
         ...defaults,
         particleCount,
         origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 },
-        colors: ["#FF007F", "#4A00FF", "#00FFC4", "#FFF000"],
+        colors: ["#1DB954", "#FFFFFF", "#FF007F", "#FFF000"],
       });
       confetti({
         ...defaults,
         particleCount,
         origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 },
-        colors: ["#FF007F", "#4A00FF", "#00FFC4", "#FFF000"],
+        colors: ["#1DB954", "#FFFFFF", "#FF007F", "#FFF000"],
       });
     }, 250);
   };
 
   return (
-    <div className="fixed inset-0 w-full h-full bg-black flex items-center justify-center overflow-hidden">
+    <div className="fixed inset-0 w-full h-full bg-black flex items-center justify-center overflow-hidden font-display selection:bg-[#1DB954] selection:text-white">
       {/* Mobile constraint wrapper */}
       <div className="w-full h-full max-w-[430px] relative bg-black overflow-hidden shadow-2xl sm:rounded-[2.5rem] sm:h-[90%] sm:my-auto sm:border-8 border-gray-900">
         
         {/* Progress Bar */}
         <div className="absolute top-0 left-0 right-0 z-50 flex gap-1 p-3 pointer-events-none">
           {SLIDES.map((_, i) => (
-            <div key={i} className="h-1 flex-1 bg-white/20 rounded-full overflow-hidden">
+            <div key={i} className="h-1 flex-1 bg-white/30 rounded-full overflow-hidden backdrop-blur-md">
               <motion.div
-                className="h-full bg-white"
+                className="h-full bg-white shadow-[0_0_10px_rgba(255,255,255,0.8)]"
                 initial={{ width: "0%" }}
                 animate={{ width: activeSlide >= i ? "100%" : "0%" }}
                 transition={{ duration: 0.3 }}
@@ -107,84 +203,309 @@ export default function Home() {
           ))}
         </div>
 
+        {/* Global Floating Elements */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+          <motion.div 
+            animate={{ 
+              rotate: 360,
+              scale: [1, 1.2, 1],
+              opacity: [0.3, 0.5, 0.3]
+            }}
+            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+            className="absolute -top-32 -left-32 w-96 h-96 bg-[#1DB954] rounded-full mix-blend-screen filter blur-[100px] opacity-30"
+          />
+          <motion.div 
+            animate={{ 
+              rotate: -360,
+              scale: [1, 1.5, 1],
+              opacity: [0.2, 0.4, 0.2]
+            }}
+            transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+            className="absolute -bottom-32 -right-32 w-96 h-96 bg-[#FF007F] rounded-full mix-blend-screen filter blur-[100px] opacity-20"
+          />
+        </div>
+
         {/* Scroll Container */}
         <div
           ref={containerRef}
           onScroll={handleScroll}
-          className="w-full h-full overflow-y-auto snap-y snap-mandatory hide-scrollbar relative"
+          className="w-full h-full overflow-y-auto snap-y snap-mandatory hide-scrollbar relative z-10"
           style={{ scrollBehavior: "smooth" }}
         >
-          {/* Slide 1: Intro */}
-          <div className="w-full h-full snap-center snap-always flex flex-col justify-center p-8 shrink-0 relative" style={{ backgroundColor: SLIDES[0].bg, color: SLIDES[0].text }}>
+          {/* Slide 0: Intro */}
+          <div className="w-full h-full snap-center snap-always flex flex-col justify-center p-8 shrink-0 relative overflow-hidden" style={{ backgroundColor: SLIDES[0].bg, color: SLIDES[0].text }}>
+            <div className="absolute top-6 left-6 text-sm font-bold tracking-widest opacity-80 flex items-center gap-2">
+              <div className="w-4 h-4 rounded-full bg-white flex items-center justify-center">
+                 <div className="w-2 h-2 rounded-full bg-[#1DB954]" />
+              </div>
+              WRAPPED
+            </div>
+            
             <motion.div
-              initial={{ opacity: 0, y: 50 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
+              initial={{ opacity: 0, scale: 0.8 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.8, delay: 0.2, type: "spring" }}
+              className="relative z-10"
             >
-              <h2 className="text-2xl font-sans mb-4 tracking-tight">Hey {CONFIG.herName}.</h2>
-              <h1 className="text-6xl sm:text-7xl font-display font-black leading-[0.85] tracking-tighter uppercase">
-                It's been a minute.
+              <h2 className="text-3xl font-sans font-bold mb-4 tracking-tight opacity-90">Hey {CONFIG.herName}.</h2>
+              <h1 className="text-7xl font-black leading-[0.85] tracking-tighter uppercase mb-6">
+                3 YEARS.
               </h1>
-              <p className="mt-8 text-xl font-medium opacity-80">Swipe up to look back.</p>
+              <p className="text-2xl font-bold opacity-90">Swipe up for your Wrapped.</p>
             </motion.div>
+
+            {/* Overlapping color blocks animation */}
+            <motion.div 
+              initial={{ height: 0 }}
+              whileInView={{ height: "100%" }}
+              transition={{ duration: 1, delay: 0.5, ease: "circOut" }}
+              className="absolute bottom-0 left-0 w-full bg-[#FF007F] z-0 mix-blend-overlay"
+              style={{ originY: 1 }}
+            />
+            <motion.div 
+              initial={{ height: 0 }}
+              whileInView={{ height: "100%" }}
+              transition={{ duration: 1, delay: 0.7, ease: "circOut" }}
+              className="absolute bottom-0 right-0 w-1/2 bg-[#4A00FF] z-0 mix-blend-overlay"
+              style={{ originY: 1 }}
+            />
           </div>
 
-          {/* Slide 2: Days */}
+          {/* Slide 1: Days */}
           <div className="w-full h-full snap-center snap-always flex flex-col justify-center p-8 shrink-0 relative" style={{ backgroundColor: SLIDES[1].bg, color: SLIDES[1].text }}>
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
               whileInView={{ scale: 1, opacity: 1 }}
               transition={{ type: "spring", bounce: 0.5, duration: 0.8 }}
             >
-              <h2 className="text-2xl font-bold mb-2">You two have been together for</h2>
-              <div className="text-8xl font-display font-black tracking-tighter my-4">
-                {daysTogether.toLocaleString()}
+              <h2 className="text-2xl font-bold mb-2 opacity-80">You two have been together for</h2>
+              <div className="text-8xl font-black tracking-tighter my-4 drop-shadow-[0_0_30px_rgba(0,255,196,0.3)]">
+                <AnimatedCounter value={daysTogether} />
               </div>
               <h2 className="text-4xl font-bold leading-none">incredible days.</h2>
             </motion.div>
           </div>
 
-          {/* Slide 3: Minutes */}
+          {/* Slide 2: Top Songs */}
           <div className="w-full h-full snap-center snap-always flex flex-col justify-center p-8 shrink-0 relative" style={{ backgroundColor: SLIDES[2].bg, color: SLIDES[2].text }}>
             <motion.div
-              initial={{ x: -100, opacity: 0 }}
-              whileInView={{ x: 0, opacity: 1 }}
-              transition={{ duration: 0.6 }}
+              initial={{ opacity: 0, x: -50 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5 }}
             >
-              <h2 className="text-3xl font-bold mb-4">That translates to</h2>
-              <div className="text-[5.5rem] font-display font-black tracking-tighter leading-[0.85] break-all my-6">
-                {minutesTogether.toLocaleString()}
+              <h2 className="text-xl font-bold opacity-70 mb-2 tracking-widest uppercase">Your Top Songs</h2>
+              <h1 className="text-5xl font-black tracking-tighter mb-8 leading-none">The soundtrack to us.</h1>
+              
+              <div className="flex flex-col gap-4">
+                {CONFIG.topSongs.map((song, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.15 + 0.2 }}
+                    className="flex items-center gap-4"
+                  >
+                    <div className="w-12 text-2xl font-bold opacity-50">#{i + 1}</div>
+                    <img src={song.cover} alt={song.title} className="w-14 h-14 object-cover rounded-sm shadow-md" />
+                    <div className="flex-1 min-w-0">
+                      <div className="font-bold text-lg truncate">{song.title}</div>
+                      <div className="text-sm opacity-60 truncate">{song.artist}</div>
+                    </div>
+                  </motion.div>
+                ))}
               </div>
-              <h2 className="text-2xl font-bold">minutes of driving me crazy. (In a good way.)</h2>
             </motion.div>
           </div>
 
-          {/* Slide 4: Sounds */}
+          {/* Slide 3: Top Artists */}
           <div className="w-full h-full snap-center snap-always flex flex-col justify-center p-8 shrink-0 relative" style={{ backgroundColor: SLIDES[3].bg, color: SLIDES[3].text }}>
             <motion.div
-              initial={{ rotate: -5, scale: 0.9, opacity: 0 }}
-              whileInView={{ rotate: 0, scale: 1, opacity: 1 }}
-              transition={{ type: "spring", duration: 1 }}
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              transition={{ duration: 0.5 }}
             >
-              <h2 className="text-2xl font-bold mb-8 uppercase tracking-widest">Your Genre</h2>
-              <h1 className="text-5xl font-display font-black leading-tight mb-8">
-                "Our Love Sounds Like..."
-              </h1>
-              <p className="text-2xl font-medium leading-relaxed border-l-4 pl-6 border-current">
-                {CONFIG.loveSoundsLike}
+              <h2 className="text-xl font-bold opacity-70 mb-2 tracking-widest uppercase">Top Artists</h2>
+              <h1 className="text-5xl font-black tracking-tighter mb-8 leading-none">Our favorite eras.</h1>
+              
+              <div className="flex flex-col gap-5">
+                {CONFIG.topArtists.map((artist, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, x: 50 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.15 + 0.2, type: "spring" }}
+                    className="flex items-center gap-4"
+                  >
+                    <div className="text-xl font-bold w-6 opacity-50">{i + 1}</div>
+                    <img src={artist.image} alt={artist.name} className="w-16 h-16 rounded-full object-cover shadow-lg border-2 border-white/20" />
+                    <div className="flex-1">
+                      <div className="font-bold text-xl">{artist.name}</div>
+                      <div className="text-sm opacity-70">{artist.streams} streams</div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          </div>
+
+          {/* Slide 4: Now Playing Card */}
+          <div className="w-full h-full snap-center snap-always flex flex-col justify-center p-8 shrink-0 relative" style={{ backgroundColor: SLIDES[4].bg, color: SLIDES[4].text }}>
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              whileInView={{ scale: 1, opacity: 1, y: 0 }}
+              transition={{ type: "spring", duration: 0.8 }}
+              className="w-full bg-[#282828] rounded-3xl p-6 shadow-2xl flex flex-col items-center border border-white/10"
+            >
+              <h2 className="text-white/60 text-sm font-bold uppercase tracking-widest mb-8 self-start">Now Playing</h2>
+              
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+                className="relative w-48 h-48 mb-8 rounded-full border-[12px] border-black shadow-xl overflow-hidden"
+              >
+                <img src={CONFIG.nowPlaying.cover} alt="vinyl" className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-black/20" />
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 bg-[#121212] rounded-full border-2 border-[#282828]" />
+              </motion.div>
+
+              <div className="w-full text-center mb-6">
+                <h3 className="text-3xl font-bold text-white mb-2">{CONFIG.nowPlaying.song}</h3>
+                <p className="text-white/60 text-lg">{CONFIG.nowPlaying.artist}</p>
+              </div>
+
+              {/* Progress bar */}
+              <div className="w-full flex flex-col gap-2 mb-6">
+                <div className="h-1.5 w-full bg-white/20 rounded-full overflow-hidden">
+                  <motion.div 
+                    initial={{ width: "0%" }}
+                    whileInView={{ width: "75%" }}
+                    transition={{ duration: 2, delay: 0.5 }}
+                    className="h-full bg-[#1DB954]"
+                  />
+                </div>
+                <div className="flex justify-between text-xs text-white/50 font-bold">
+                  <span>2:14</span>
+                  <span>-0:46</span>
+                </div>
+              </div>
+
+              {/* Equalizer */}
+              <div className="flex items-end justify-center gap-1 h-8 w-full">
+                {[...Array(5)].map((_, i) => (
+                  <motion.div
+                    key={i}
+                    animate={{ scaleY: [0.3, 1, 0.4, 0.8, 0.3] }}
+                    transition={{ duration: 1 + Math.random(), repeat: Infinity, ease: "easeInOut", delay: i * 0.1 }}
+                    className="w-2 bg-[#1DB954] rounded-t-sm origin-bottom"
+                    style={{ height: "100%" }}
+                  />
+                ))}
+              </div>
+            </motion.div>
+          </div>
+
+          {/* Slide 5: Sound Town */}
+          <div className="w-full h-full snap-center snap-always flex flex-col justify-center p-8 shrink-0 relative overflow-hidden" style={{ backgroundColor: SLIDES[5].bg, color: SLIDES[5].text }}>
+            <motion.div 
+              initial={{ scale: 1.1, opacity: 0 }}
+              whileInView={{ scale: 1, opacity: 0.6 }}
+              transition={{ duration: 1.5 }}
+              className="absolute inset-0 z-0"
+            >
+              <img src={CONFIG.soundTown.bg} alt="City" className="w-full h-full object-cover blur-sm" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
+            </motion.div>
+            
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              className="relative z-10 text-center"
+            >
+              <h2 className="text-2xl font-bold mb-4 opacity-80 uppercase tracking-widest">Sound Town</h2>
+              <div className="text-6xl font-black leading-none mb-6 drop-shadow-xl">{CONFIG.soundTown.city}</div>
+              <p className="text-xl font-medium opacity-90 drop-shadow-md">
+                {CONFIG.soundTown.description}
               </p>
             </motion.div>
           </div>
 
-          {/* Slide 5: Moments */}
-          <div className="w-full h-full snap-center snap-always flex flex-col justify-center p-8 shrink-0 relative" style={{ backgroundColor: SLIDES[4].bg, color: SLIDES[4].text }}>
+          {/* Slide 6: Polaroids */}
+          <div className="w-full h-full snap-center snap-always flex flex-col items-center justify-center p-8 shrink-0 relative" style={{ backgroundColor: SLIDES[6].bg, color: SLIDES[6].text }}>
+            <h2 className="absolute top-20 text-3xl font-black uppercase tracking-tighter w-full text-center z-20">The Highlights</h2>
+            
+            <div className="relative w-full aspect-square mt-10">
+              {CONFIG.photos.map((photo, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ 
+                    opacity: 0, 
+                    scale: 1.5,
+                    rotate: (Math.random() - 0.5) * 40,
+                    x: (Math.random() - 0.5) * 100,
+                    y: (Math.random() - 0.5) * 100 
+                  }}
+                  whileInView={{ 
+                    opacity: 1, 
+                    scale: 1,
+                    rotate: (i % 2 === 0 ? 1 : -1) * (i * 4 + 2),
+                    x: 0,
+                    y: 0
+                  }}
+                  transition={{ delay: i * 0.3, type: "spring", bounce: 0.4 }}
+                  className="absolute inset-0 flex flex-col items-center justify-center"
+                  style={{ zIndex: i }}
+                >
+                  <div className="bg-white p-4 pb-12 rounded-sm shadow-2xl w-3/4 aspect-[3/4] flex flex-col">
+                    <img src={photo.image} alt={photo.caption} className="w-full flex-1 object-cover" />
+                    <p className="mt-4 text-center font-bold text-sm font-sans text-black">{photo.caption}</p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+
+          {/* Marquee transition */}
+          <div className="w-full snap-center snap-always py-12 shrink-0 bg-[#1DB954] text-black overflow-hidden flex items-center">
+            <motion.div
+              animate={{ x: ["0%", "-50%"] }}
+              transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+              className="whitespace-nowrap flex text-5xl font-black uppercase tracking-tighter"
+            >
+              {[...Array(4)].map((_, i) => (
+                <span key={i} className="mx-4">
+                  3 YEARS • OUR WRAPPED • {CONFIG.herName.toUpperCase()} & {CONFIG.yourName.toUpperCase()} • 
+                </span>
+              ))}
+            </motion.div>
+          </div>
+
+          {/* Stats Slides 7-9 */}
+          {CONFIG.stats.map((stat, i) => (
+            <div key={i} className="w-full h-full snap-center snap-always flex flex-col justify-center p-8 shrink-0 relative" style={{ backgroundColor: SLIDES[7 + i].bg, color: SLIDES[7 + i].text }}>
+              <motion.div
+                initial={{ opacity: 0, y: 50 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6 }}
+              >
+                <h2 className="text-2xl font-bold mb-4 opacity-80 uppercase tracking-wide">{stat.label}</h2>
+                <div className="text-[5.5rem] font-black tracking-tighter leading-[0.85] break-all my-6 drop-shadow-lg">
+                  <AnimatedCounter value={stat.value} duration={2.5} />
+                </div>
+                <h2 className="text-2xl font-bold">{stat.punchline}</h2>
+              </motion.div>
+            </div>
+          ))}
+
+          {/* Slide 10: Moments */}
+          <div className="w-full h-full snap-center snap-always flex flex-col justify-center p-8 shrink-0 relative" style={{ backgroundColor: SLIDES[10].bg, color: SLIDES[10].text }}>
             <motion.div
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
               transition={{ duration: 0.5 }}
               className="h-full flex flex-col justify-center"
             >
-              <h1 className="text-5xl font-display font-black mb-12">Top 5 Memories</h1>
+              <h1 className="text-6xl font-black mb-12 tracking-tighter uppercase leading-none">Top 5 Memories</h1>
               <div className="flex flex-col gap-6">
                 {CONFIG.topMoments.map((moment, i) => (
                   <motion.div
@@ -194,7 +515,7 @@ export default function Home() {
                     transition={{ delay: i * 0.15, type: "spring" }}
                     className="flex items-center gap-4"
                   >
-                    <span className="text-4xl font-display font-black opacity-50">{i + 1}</span>
+                    <span className="text-4xl font-black opacity-40">{i + 1}</span>
                     <span className="text-2xl font-bold leading-tight">{moment}</span>
                   </motion.div>
                 ))}
@@ -202,45 +523,50 @@ export default function Home() {
             </motion.div>
           </div>
 
-          {/* Slide 6: Habits */}
-          <div className="w-full h-full snap-center snap-always flex flex-col justify-center p-8 shrink-0 relative" style={{ backgroundColor: SLIDES[5].bg, color: SLIDES[5].text }}>
+          {/* Slide 11: Habits */}
+          <div className="w-full h-full snap-center snap-always flex flex-col justify-center p-8 shrink-0 relative" style={{ backgroundColor: SLIDES[11].bg, color: SLIDES[11].text }}>
             <motion.div
               initial={{ scale: 1.1, opacity: 0 }}
               whileInView={{ scale: 1, opacity: 1 }}
               transition={{ duration: 0.6 }}
             >
-              <h2 className="text-3xl font-display font-black mb-8">Your Top Habits:</h2>
-              <div className="space-y-8">
+              <h2 className="text-5xl font-black mb-8 tracking-tighter leading-none">Your Top Habits:</h2>
+              <div className="space-y-6">
                 {CONFIG.habits.map((habit, i) => (
                   <motion.div
                     key={i}
                     initial={{ y: 20, opacity: 0 }}
                     whileInView={{ y: 0, opacity: 1 }}
                     transition={{ delay: i * 0.2 + 0.3 }}
-                    className="bg-black/10 p-6 rounded-3xl"
+                    className="bg-[#282828] p-6 rounded-3xl border border-white/5"
                   >
-                    <p className="text-2xl font-bold">{habit}</p>
+                    <p className="text-2xl font-bold text-white">{habit}</p>
                   </motion.div>
                 ))}
               </div>
             </motion.div>
           </div>
 
-          {/* Slide 7: Quiet */}
-          <div className="w-full h-full snap-center snap-always flex flex-col justify-center items-center text-center p-8 shrink-0 relative" style={{ backgroundColor: SLIDES[6].bg, color: SLIDES[6].text }}>
+          {/* Slide 12: Quiet */}
+          <div className="w-full h-full snap-center snap-always flex flex-col justify-center items-center text-center p-8 shrink-0 relative" style={{ backgroundColor: SLIDES[12].bg, color: SLIDES[12].text }}>
+             <motion.div
+               animate={{ y: [-10, 10, -10] }}
+               transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+               className="absolute inset-0 bg-gradient-to-b from-[#1DB954]/10 to-transparent pointer-events-none"
+             />
             <motion.div
               initial={{ opacity: 0, filter: "blur(10px)" }}
               whileInView={{ opacity: 1, filter: "blur(0px)" }}
               transition={{ duration: 1.5 }}
             >
-              <p className="text-3xl font-serif italic font-medium leading-relaxed max-w-sm">
+              <p className="text-4xl font-sans italic font-medium leading-relaxed max-w-sm opacity-90">
                 But mostly, it's just about being with you.
               </p>
             </motion.div>
           </div>
 
-          {/* Slide 8: Finale */}
-          <div className="w-full h-full snap-center snap-always flex flex-col justify-center p-8 shrink-0 relative" style={{ backgroundColor: SLIDES[7].bg, color: SLIDES[7].text }}>
+          {/* Slide 13: Finale */}
+          <div className="w-full h-full snap-center snap-always flex flex-col justify-center p-8 shrink-0 relative" style={{ backgroundColor: SLIDES[13].bg, color: SLIDES[13].text }}>
             <motion.div
               initial={{ y: 50, opacity: 0 }}
               whileInView={{ y: 0, opacity: 1 }}
@@ -248,22 +574,30 @@ export default function Home() {
               className="flex flex-col h-full justify-between py-12"
             >
               <div>
-                <h1 className="text-6xl font-display font-black tracking-tighter mb-8 uppercase">
+                <div className="flex items-center gap-2 mb-8">
+                   <div className="w-6 h-6 rounded-full bg-black flex items-center justify-center">
+                     <div className="w-3 h-3 rounded-full bg-[#1DB954]" />
+                   </div>
+                   <span className="font-bold tracking-widest text-sm text-black">WRAPPED</span>
+                </div>
+                
+                <h1 className="text-6xl font-black tracking-tighter mb-8 uppercase text-black">
                   Happy 3 Years.
                 </h1>
-                <p className="text-2xl font-medium leading-relaxed mb-8">
+                <p className="text-2xl font-bold leading-relaxed mb-8 text-black/80">
                   {CONFIG.closingMessage}
                 </p>
-                <p className="text-xl font-bold opacity-50">— {CONFIG.yourName}</p>
+                <p className="text-xl font-bold text-black/50">— {CONFIG.yourName}</p>
               </div>
 
               <motion.div
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
+                className="w-full"
               >
                 <Button 
                   onClick={triggerConfetti}
-                  className="w-full h-16 text-2xl font-bold rounded-full bg-[#FF007F] text-white hover:bg-[#D4006A] shadow-xl border-none"
+                  className="w-full h-16 text-xl font-bold rounded-full bg-black text-white hover:bg-[#282828] shadow-2xl border-none tracking-wide"
                 >
                   Tap to celebrate
                 </Button>
