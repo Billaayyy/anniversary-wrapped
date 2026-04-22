@@ -342,36 +342,36 @@ function AchievementsSlide({ bg, text, achievements, onComplete }: { bg: string;
   return (
     <div
       ref={ref}
-      className="w-full h-full snap-center snap-always flex flex-col justify-center p-8 shrink-0 relative overflow-hidden"
+      className="w-full h-full snap-center snap-always flex flex-col justify-center px-6 py-10 shrink-0 relative overflow-hidden"
       style={{ backgroundColor: bg, color: text }}
     >
       {/* Floating orbs */}
       <motion.div
-        className="absolute -top-20 -left-20 w-72 h-72 rounded-full bg-[#1DB954]/20 blur-3xl"
+        className="absolute -top-20 -left-20 w-60 h-60 rounded-full bg-[#1DB954]/20 blur-3xl"
         animate={{ x: [0, 40, 0], y: [0, 30, 0] }}
         transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
       />
       <motion.div
-        className="absolute -bottom-32 -right-20 w-96 h-96 rounded-full bg-[#1DB954]/10 blur-3xl"
+        className="absolute -bottom-32 -right-20 w-72 h-72 rounded-full bg-[#1DB954]/10 blur-3xl"
         animate={{ x: [0, -30, 0], y: [0, -20, 0] }}
         transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
       />
 
-      <div className="relative z-10">
+      <div className="relative z-10 flex flex-col w-full">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.5 }}
-          className="mb-8"
+          className="mb-4"
         >
-          <p className="text-sm font-bold tracking-[0.3em] opacity-70 mb-3">ACHIEVEMENTS UNLOCKED</p>
-          <h1 className="text-5xl font-black leading-[0.9] tracking-tighter text-white">
-            Look at <br />
+          <p className="text-[10px] font-bold tracking-[0.3em] opacity-70 mb-2">ACHIEVEMENTS UNLOCKED</p>
+          <h1 className="text-3xl font-black leading-[0.95] tracking-tighter text-white">
+            Look at{" "}
             <span className="text-[#1DB954]">everything</span> we've done.
           </h1>
         </motion.div>
 
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-2">
           {achievements.map((item, i) => {
             const isChecked = checked.includes(i);
             return (
@@ -380,12 +380,12 @@ function AchievementsSlide({ bg, text, achievements, onComplete }: { bg: string;
                 initial={{ opacity: 0, x: -30 }}
                 animate={inView ? { opacity: 1, x: 0 } : {}}
                 transition={{ delay: 0.3 + i * 0.08, type: "spring", stiffness: 120 }}
-                className="flex items-center gap-4 bg-white/5 backdrop-blur rounded-2xl p-4 border border-white/10"
+                className="flex items-center gap-3 bg-white/5 backdrop-blur rounded-xl px-3 py-2.5 border border-white/10"
               >
                 <motion.div
                   animate={isChecked ? { scale: [1, 1.4, 1], backgroundColor: "#1DB954" } : { backgroundColor: "rgba(255,255,255,0.08)" }}
                   transition={{ duration: 0.5, type: "spring", stiffness: 200 }}
-                  className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center border-2 border-[#1DB954]/40"
+                  className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center border-2 border-[#1DB954]/40"
                 >
                   <AnimatePresence>
                     {isChecked && (
@@ -401,7 +401,7 @@ function AchievementsSlide({ bg, text, achievements, onComplete }: { bg: string;
                         strokeWidth="3.5"
                         strokeLinecap="round"
                         strokeLinejoin="round"
-                        className="w-5 h-5"
+                        className="w-4 h-4"
                       >
                         <motion.path
                           d="M5 12l5 5L20 7"
@@ -415,7 +415,7 @@ function AchievementsSlide({ bg, text, achievements, onComplete }: { bg: string;
                 </motion.div>
                 <motion.span
                   animate={isChecked ? { color: "#FFFFFF" } : { color: "rgba(255,255,255,0.55)" }}
-                  className="text-lg font-bold leading-tight"
+                  className="text-sm font-bold leading-snug"
                 >
                   {item}
                 </motion.span>
@@ -430,12 +430,12 @@ function AchievementsSlide({ bg, text, achievements, onComplete }: { bg: string;
               initial={{ opacity: 0, y: 20, scale: 0.9 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               transition={{ type: "spring", stiffness: 200 }}
-              className="mt-8 text-center"
+              className="mt-5 text-center"
             >
-              <div className="inline-block px-6 py-3 rounded-full bg-[#1DB954] text-black font-black tracking-wide text-lg shadow-2xl shadow-[#1DB954]/40">
+              <div className="inline-block px-5 py-2 rounded-full bg-[#1DB954] text-black font-black tracking-wide text-sm shadow-2xl shadow-[#1DB954]/40">
                 100% COMPLETE
               </div>
-              <p className="mt-4 text-white/70 text-sm font-medium">And we're just getting started.</p>
+              <p className="mt-2 text-white/70 text-xs font-medium">And we're just getting started.</p>
             </motion.div>
           )}
         </AnimatePresence>
