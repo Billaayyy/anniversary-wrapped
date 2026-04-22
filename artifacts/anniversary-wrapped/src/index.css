@@ -346,3 +346,13 @@
     inset: -1px;
   }
 }
+@keyframes polaroidsScrollUp {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(0, -50%, 0); }
+}
+@keyframes polaroidsScrollDown {
+  from { transform: translate3d(0, -50%, 0); }
+  to   { transform: translate3d(0, 0, 0); }
+}
+.polaroids-scroll-up   { animation: polaroidsScrollUp   32s linear infinite; }
+.polaroids-scroll-down { animation: polaroidsScrollDown 38s linear infinite; }

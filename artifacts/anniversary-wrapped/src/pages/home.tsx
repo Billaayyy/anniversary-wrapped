@@ -173,33 +173,31 @@ function PolaroidsSlide({ bg, text, photos }: { bg: string; text: string; photos
       className="w-full h-full snap-center snap-always flex flex-col items-center justify-center p-8 shrink-0 relative overflow-hidden cursor-pointer"
       style={{ backgroundColor: bg, color: text }}
     >
-      {/* Background scrolling photo columns (infinite loop) */}
+      {/* Background scrolling photo columns — pure CSS for GPU perf */}
       <div className="absolute inset-0 pointer-events-none flex justify-between opacity-40 z-0">
-        <div className="w-[42%] h-full overflow-hidden relative">
-          <motion.div
-            animate={{ y: ["0%", "-50%"] }}
-            transition={{ duration: 28, repeat: Infinity, ease: "linear" }}
-            className="flex flex-col gap-3 absolute top-0 left-0 right-0"
+        <div className="w-[40%] h-full overflow-hidden relative">
+          <div
+            className="flex flex-col gap-3 absolute top-0 left-0 right-0 polaroids-scroll-up"
+            style={{ willChange: "transform" }}
           >
-            {[...photos, ...photos, ...photos, ...photos].map((photo, i) => (
+            {[...photos, ...photos].map((photo, i) => (
               <div key={`l-${i}`} className="bg-white p-2 pb-6 shadow-xl rounded-sm rotate-[-4deg]">
-                <img src={photo.image} alt="" className="w-full aspect-[3/4] object-cover" />
+                <img src={photo.image} alt="" loading="lazy" decoding="async" className="w-full aspect-[3/4] object-cover" />
               </div>
             ))}
-          </motion.div>
+          </div>
         </div>
-        <div className="w-[42%] h-full overflow-hidden relative">
-          <motion.div
-            animate={{ y: ["-50%", "0%"] }}
-            transition={{ duration: 32, repeat: Infinity, ease: "linear" }}
-            className="flex flex-col gap-3 absolute top-0 left-0 right-0"
+        <div className="w-[40%] h-full overflow-hidden relative">
+          <div
+            className="flex flex-col gap-3 absolute top-0 left-0 right-0 polaroids-scroll-down"
+            style={{ willChange: "transform" }}
           >
-            {[...photos.slice().reverse(), ...photos.slice().reverse(), ...photos.slice().reverse(), ...photos.slice().reverse()].map((photo, i) => (
+            {[...photos.slice().reverse(), ...photos.slice().reverse()].map((photo, i) => (
               <div key={`r-${i}`} className="bg-white p-2 pb-6 shadow-xl rounded-sm rotate-[4deg]">
-                <img src={photo.image} alt="" className="w-full aspect-[3/4] object-cover" />
+                <img src={photo.image} alt="" loading="lazy" decoding="async" className="w-full aspect-[3/4] object-cover" />
               </div>
             ))}
-          </motion.div>
+          </div>
         </div>
       </div>
 
@@ -240,7 +238,6 @@ function PolaroidsSlide({ bg, text, photos }: { bg: string; text: string; photos
       <div className="relative w-full aspect-square mt-10 z-10">
         {photos.map((photo, i) => {
           const restRotate = (i % 2 === 0 ? 1 : -1) * (i * 4 + 2);
-          const floatRange = 6 + i * 2;
 
           // Stacked layout (default)
           const stackedAnim = {
@@ -251,15 +248,15 @@ function PolaroidsSlide({ bg, text, photos }: { bg: string; text: string; photos
             y: "0%",
           };
 
-          // Expanded grid: 2 cols x 3 rows
+          // Expanded grid: 2 cols x 3 rows — tighter & larger
           const col = i % 2;
           const row = Math.floor(i / 2);
           const expandedAnim = {
             opacity: 1,
-            scale: 0.42,
-            rotate: (i % 2 === 0 ? -1 : 1) * (4 + (i % 3) * 2),
-            x: `${(col - 0.5) * 95}%`,
-            y: `${(row - 1) * 95}%`,
+            scale: 0.55,
+            rotate: (i % 2 === 0 ? -1 : 1) * (3 + (i % 3) * 1.5),
+            x: `${(col - 0.5) * 70}%`,
+            y: `${(row - 1) * 70}%`,
           };
 
           return (
@@ -267,39 +264,22 @@ function PolaroidsSlide({ bg, text, photos }: { bg: string; text: string; photos
               key={i}
               initial={{
                 opacity: 0,
-                scale: 1.5,
-                rotate: (Math.random() - 0.5) * 40,
-                x: (Math.random() - 0.5) * 100,
-                y: (Math.random() - 0.5) * 100,
+                scale: 1.3,
+                rotate: (i % 2 === 0 ? -15 : 15),
               }}
-              animate={inView ? (expanded ? expandedAnim : stackedAnim) : { opacity: 0, scale: 1.5 }}
+              animate={inView ? (expanded ? expandedAnim : stackedAnim) : { opacity: 0, scale: 1.3 }}
               transition={
                 expanded
-                  ? { delay: i * 0.08, type: "spring", stiffness: 90, damping: 14 }
-                  : { delay: i * 0.3, type: "spring", bounce: 0.4 }
+                  ? { delay: i * 0.06, type: "spring", stiffness: 110, damping: 15 }
+                  : { delay: i * 0.25, type: "spring", bounce: 0.35 }
               }
               className="absolute inset-0 flex flex-col items-center justify-center"
-              style={{ zIndex: i + 5 }}
+              style={{ zIndex: i + 5, willChange: "transform" }}
             >
-              <motion.div
-                animate={
-                  expanded
-                    ? { y: 0, rotate: 0 }
-                    : {
-                        y: [0, -floatRange, 0, floatRange, 0],
-                        rotate: [restRotate, restRotate + 1.5, restRotate, restRotate - 1.5, restRotate],
-                      }
-                }
-                transition={
-                  expanded
-                    ? { duration: 0.4 }
-                    : { duration: 6 + i * 0.7, repeat: Infinity, ease: "easeInOut", delay: i * 0.4 + 1.5 }
-                }
-                className="bg-white p-3 pb-10 rounded-sm shadow-2xl w-3/4 aspect-[3/4] flex flex-col"
-              >
-                <img src={photo.image} alt={photo.caption} className="w-full flex-1 object-cover" />
+              <div className="bg-white p-3 pb-10 rounded-sm shadow-2xl w-3/4 aspect-[3/4] flex flex-col">
+                <img src={photo.image} alt={photo.caption} loading="lazy" decoding="async" className="w-full flex-1 object-cover" />
                 <p className="mt-3 text-center font-bold text-xs font-sans text-black">{photo.caption}</p>
-              </motion.div>
+              </div>
             </motion.div>
           );
         })}
