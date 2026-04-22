@@ -92,6 +92,16 @@ const CONFIG = {
     "Saying 'I love you' first",
   ],
   closingMessage: "To my favorite person. Thank you for the best 3 years of my life. Here's to a lifetime more.",
+
+  // Slide: Achievements unlocked together (checklist)
+  achievements: [
+    "Survived our first big fight",
+    "Adopted our first plant (and kept it alive)",
+    "Built a thousand inside jokes",
+    "Learned every one of each other's coffee orders",
+    "Met the families",
+    "Planned a future together",
+  ],
 };
 // ============================================================================
 
@@ -109,6 +119,7 @@ const SLIDES = [
   { id: "moments", bg: "#FFD700", text: "#FF0055" },
   { id: "habits", bg: "#1A1A1A", text: "#1DB954" },
   { id: "quiet", bg: "#1A1A1A", text: "#E5E5E5" },
+  { id: "achievements", bg: "#0A1A0F", text: "#1DB954" },
   { id: "finale", bg: "#1DB954", text: "#FFFFFF" },
 ];
 
@@ -137,6 +148,147 @@ function AnimatedCounter({ value, duration = 2 }: { value: number, duration?: nu
   }, [value, duration, inView]);
 
   return <span ref={ref}>0</span>;
+}
+
+function AchievementsSlide({ bg, text, achievements, onComplete }: { bg: string; text: string; achievements: string[]; onComplete: () => void }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, { margin: "-30%" });
+  const [checked, setChecked] = useState<number[]>([]);
+  const [done, setDone] = useState(false);
+  const firedRef = useRef(false);
+
+  useEffect(() => {
+    if (!inView) {
+      setChecked([]);
+      setDone(false);
+      firedRef.current = false;
+      return;
+    }
+    const timers: number[] = [];
+    achievements.forEach((_, i) => {
+      const t = window.setTimeout(() => {
+        setChecked((prev) => [...prev, i]);
+        if (i === achievements.length - 1) {
+          const finishT = window.setTimeout(() => {
+            setDone(true);
+            if (!firedRef.current) {
+              firedRef.current = true;
+              onComplete();
+            }
+          }, 700);
+          timers.push(finishT);
+        }
+      }, 600 + i * 550);
+      timers.push(t);
+    });
+    return () => {
+      timers.forEach((t) => clearTimeout(t));
+    };
+  }, [inView, achievements, onComplete]);
+
+  return (
+    <div
+      ref={ref}
+      className="w-full h-full snap-center snap-always flex flex-col justify-center p-8 shrink-0 relative overflow-hidden"
+      style={{ backgroundColor: bg, color: text }}
+    >
+      {/* Floating orbs */}
+      <motion.div
+        className="absolute -top-20 -left-20 w-72 h-72 rounded-full bg-[#1DB954]/20 blur-3xl"
+        animate={{ x: [0, 40, 0], y: [0, 30, 0] }}
+        transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+      />
+      <motion.div
+        className="absolute -bottom-32 -right-20 w-96 h-96 rounded-full bg-[#1DB954]/10 blur-3xl"
+        animate={{ x: [0, -30, 0], y: [0, -20, 0] }}
+        transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
+      />
+
+      <div className="relative z-10">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={inView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.5 }}
+          className="mb-8"
+        >
+          <p className="text-sm font-bold tracking-[0.3em] opacity-70 mb-3">ACHIEVEMENTS UNLOCKED</p>
+          <h1 className="text-5xl font-black leading-[0.9] tracking-tighter text-white">
+            Look at <br />
+            <span className="text-[#1DB954]">everything</span> we've done.
+          </h1>
+        </motion.div>
+
+        <div className="flex flex-col gap-3">
+          {achievements.map((item, i) => {
+            const isChecked = checked.includes(i);
+            return (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, x: -30 }}
+                animate={inView ? { opacity: 1, x: 0 } : {}}
+                transition={{ delay: 0.3 + i * 0.08, type: "spring", stiffness: 120 }}
+                className="flex items-center gap-4 bg-white/5 backdrop-blur rounded-2xl p-4 border border-white/10"
+              >
+                <motion.div
+                  animate={isChecked ? { scale: [1, 1.4, 1], backgroundColor: "#1DB954" } : { backgroundColor: "rgba(255,255,255,0.08)" }}
+                  transition={{ duration: 0.5, type: "spring", stiffness: 200 }}
+                  className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center border-2 border-[#1DB954]/40"
+                >
+                  <AnimatePresence>
+                    {isChecked && (
+                      <motion.svg
+                        key="check"
+                        initial={{ pathLength: 0, opacity: 0 }}
+                        animate={{ pathLength: 1, opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.4, ease: "easeOut" }}
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="white"
+                        strokeWidth="3.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="w-5 h-5"
+                      >
+                        <motion.path
+                          d="M5 12l5 5L20 7"
+                          initial={{ pathLength: 0 }}
+                          animate={{ pathLength: 1 }}
+                          transition={{ duration: 0.4, ease: "easeOut" }}
+                        />
+                      </motion.svg>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
+                <motion.span
+                  animate={isChecked ? { color: "#FFFFFF" } : { color: "rgba(255,255,255,0.55)" }}
+                  className="text-lg font-bold leading-tight"
+                >
+                  {item}
+                </motion.span>
+              </motion.div>
+            );
+          })}
+        </div>
+
+        <AnimatePresence>
+          {done && (
+            <motion.div
+              initial={{ opacity: 0, y: 20, scale: 0.9 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ type: "spring", stiffness: 200 }}
+              className="mt-8 text-center"
+            >
+              <div className="inline-block px-6 py-3 rounded-full bg-[#1DB954] text-black font-black tracking-wide text-lg shadow-2xl shadow-[#1DB954]/40">
+                100% COMPLETE
+              </div>
+              <p className="mt-4 text-white/70 text-sm font-medium">And we're just getting started.</p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </div>
+  );
 }
 
 export default function Home() {
@@ -565,8 +717,11 @@ export default function Home() {
             </motion.div>
           </div>
 
-          {/* Slide 13: Finale */}
-          <div className="w-full h-full snap-center snap-always flex flex-col justify-center p-8 shrink-0 relative" style={{ backgroundColor: SLIDES[13].bg, color: SLIDES[13].text }}>
+          {/* Slide 13: Achievements Unlocked */}
+          <AchievementsSlide bg={SLIDES[13].bg} text={SLIDES[13].text} achievements={CONFIG.achievements} onComplete={triggerConfetti} />
+
+          {/* Slide 14: Finale */}
+          <div className="w-full h-full snap-center snap-always flex flex-col justify-center p-8 shrink-0 relative" style={{ backgroundColor: SLIDES[14].bg, color: SLIDES[14].text }}>
             <motion.div
               initial={{ y: 50, opacity: 0 }}
               whileInView={{ y: 0, opacity: 1 }}
