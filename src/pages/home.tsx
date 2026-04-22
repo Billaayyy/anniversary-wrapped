@@ -125,29 +125,31 @@ const SLIDES = [
   { id: "finale", bg: "#1DB954", text: "#FFFFFF" },
 ];
 
-function AnimatedCounter({ value, duration = 2 }: { value: number, duration?: number }) {
+function AnimatedCounter({ value, duration = 2, active }: { value: number, duration?: number, active: boolean }) {
   const ref = useRef<HTMLSpanElement>(null);
-  const inView = useInView(ref, { once: true, margin: "-100px" });
-  
+  const hasRun = useRef(false);
+
   useEffect(() => {
-    if (!inView) return;
+    if (!active || hasRun.current) return;
+    hasRun.current = true;
     let startTimestamp: number;
+    let raf: number;
     const step = (timestamp: number) => {
       if (!startTimestamp) startTimestamp = timestamp;
       const progress = Math.min((timestamp - startTimestamp) / (duration * 1000), 1);
-      // easeOutExpo
       const easeProgress = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
       if (ref.current) {
         ref.current.innerText = Math.floor(easeProgress * value).toLocaleString();
       }
       if (progress < 1) {
-        window.requestAnimationFrame(step);
+        raf = window.requestAnimationFrame(step);
       } else {
-        if(ref.current) ref.current.innerText = value.toLocaleString();
+        if (ref.current) ref.current.innerText = value.toLocaleString();
       }
     };
-    window.requestAnimationFrame(step);
-  }, [value, duration, inView]);
+    raf = window.requestAnimationFrame(step);
+    return () => window.cancelAnimationFrame(raf);
+  }, [active, value, duration]);
 
   return <span ref={ref}>0</span>;
 }
@@ -585,7 +587,7 @@ export default function Home() {
             >
               <h2 className="text-2xl font-bold mb-2 opacity-80">You two have been together for</h2>
               <div className="text-8xl font-black tracking-tighter my-4 drop-shadow-[0_0_30px_rgba(0,255,196,0.3)]">
-                <AnimatedCounter value={daysTogether} />
+                <AnimatedCounter value={daysTogether} active={activeSlide === 1} />
               </div>
               <h2 className="text-4xl font-bold leading-none">incredible days.</h2>
             </motion.div>
@@ -763,7 +765,7 @@ export default function Home() {
               >
                 <h2 className="text-2xl font-bold mb-4 opacity-80 uppercase tracking-wide">{stat.label}</h2>
                 <div className="text-[5.5rem] font-black tracking-tighter leading-[0.85] break-all my-6 drop-shadow-lg">
-                  <AnimatedCounter value={stat.value} duration={2.5} />
+                  <AnimatedCounter value={stat.value} duration={2.5} active={activeSlide === 7 + i} />
                 </div>
                 <h2 className="text-2xl font-bold">{stat.punchline}</h2>
               </motion.div>
