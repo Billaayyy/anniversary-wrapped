@@ -69,6 +69,8 @@ const CONFIG = {
     { image: photo2, caption: "Always holding on." },
     { image: photo3, caption: "Our usual spot." },
     { image: photo4, caption: "Getting lost together." },
+    { image: album1, caption: "Late night drives." },
+    { image: artist1, caption: "Just us, golden hour." },
   ],
 
   // Slides 7-9: Stats
@@ -148,6 +150,177 @@ function AnimatedCounter({ value, duration = 2 }: { value: number, duration?: nu
   }, [value, duration, inView]);
 
   return <span ref={ref}>0</span>;
+}
+
+function PolaroidsSlide({ bg, text, photos }: { bg: string; text: string; photos: { image: string; caption: string }[] }) {
+  const slideRef = useRef<HTMLDivElement>(null);
+  const inView = useInView(slideRef, { margin: "-30%" });
+  const [expanded, setExpanded] = useState(false);
+
+  // Reset expansion when leaving the slide
+  useEffect(() => {
+    if (!inView) setExpanded(false);
+  }, [inView]);
+
+  const expand = () => setExpanded(true);
+
+  return (
+    <div
+      ref={slideRef}
+      onClick={expand}
+      onWheel={expand}
+      onTouchStart={expand}
+      className="w-full h-full snap-center snap-always flex flex-col items-center justify-center p-8 shrink-0 relative overflow-hidden cursor-pointer"
+      style={{ backgroundColor: bg, color: text }}
+    >
+      {/* Background scrolling photo columns (infinite loop) */}
+      <div className="absolute inset-0 pointer-events-none flex justify-between opacity-40 z-0">
+        <div className="w-[42%] h-full overflow-hidden relative">
+          <motion.div
+            animate={{ y: ["0%", "-50%"] }}
+            transition={{ duration: 28, repeat: Infinity, ease: "linear" }}
+            className="flex flex-col gap-3 absolute top-0 left-0 right-0"
+          >
+            {[...photos, ...photos, ...photos, ...photos].map((photo, i) => (
+              <div key={`l-${i}`} className="bg-white p-2 pb-6 shadow-xl rounded-sm rotate-[-4deg]">
+                <img src={photo.image} alt="" className="w-full aspect-[3/4] object-cover" />
+              </div>
+            ))}
+          </motion.div>
+        </div>
+        <div className="w-[42%] h-full overflow-hidden relative">
+          <motion.div
+            animate={{ y: ["-50%", "0%"] }}
+            transition={{ duration: 32, repeat: Infinity, ease: "linear" }}
+            className="flex flex-col gap-3 absolute top-0 left-0 right-0"
+          >
+            {[...photos.slice().reverse(), ...photos.slice().reverse(), ...photos.slice().reverse(), ...photos.slice().reverse()].map((photo, i) => (
+              <div key={`r-${i}`} className="bg-white p-2 pb-6 shadow-xl rounded-sm rotate-[4deg]">
+                <img src={photo.image} alt="" className="w-full aspect-[3/4] object-cover" />
+              </div>
+            ))}
+          </motion.div>
+        </div>
+      </div>
+
+      <div className="absolute inset-0 bg-gradient-to-b from-[#F4F4F4]/70 via-[#F4F4F4]/30 to-[#F4F4F4]/70 z-0 pointer-events-none" />
+
+      {/* Header — fades to new copy when expanded */}
+      <div className="absolute top-16 w-full text-center z-20 px-6 h-16">
+        <AnimatePresence mode="wait">
+          {!expanded ? (
+            <motion.h2
+              key="highlights"
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.4 }}
+              className="text-3xl font-black uppercase tracking-tighter"
+            >
+              The Highlights
+            </motion.h2>
+          ) : (
+            <motion.div
+              key="cute-moments"
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.5, delay: 0.15 }}
+            >
+              <h2 className="text-2xl font-black tracking-tight leading-tight">
+                Take a look at our<br />
+                <span className="text-[#1DB954]">cute moments!</span>
+              </h2>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* Photo stack / spread */}
+      <div className="relative w-full aspect-square mt-10 z-10">
+        {photos.map((photo, i) => {
+          const restRotate = (i % 2 === 0 ? 1 : -1) * (i * 4 + 2);
+          const floatRange = 6 + i * 2;
+
+          // Stacked layout (default)
+          const stackedAnim = {
+            opacity: 1,
+            scale: 1,
+            rotate: restRotate,
+            x: "0%",
+            y: "0%",
+          };
+
+          // Expanded grid: 2 cols x 3 rows
+          const col = i % 2;
+          const row = Math.floor(i / 2);
+          const expandedAnim = {
+            opacity: 1,
+            scale: 0.42,
+            rotate: (i % 2 === 0 ? -1 : 1) * (4 + (i % 3) * 2),
+            x: `${(col - 0.5) * 95}%`,
+            y: `${(row - 1) * 95}%`,
+          };
+
+          return (
+            <motion.div
+              key={i}
+              initial={{
+                opacity: 0,
+                scale: 1.5,
+                rotate: (Math.random() - 0.5) * 40,
+                x: (Math.random() - 0.5) * 100,
+                y: (Math.random() - 0.5) * 100,
+              }}
+              animate={inView ? (expanded ? expandedAnim : stackedAnim) : { opacity: 0, scale: 1.5 }}
+              transition={
+                expanded
+                  ? { delay: i * 0.08, type: "spring", stiffness: 90, damping: 14 }
+                  : { delay: i * 0.3, type: "spring", bounce: 0.4 }
+              }
+              className="absolute inset-0 flex flex-col items-center justify-center"
+              style={{ zIndex: i + 5 }}
+            >
+              <motion.div
+                animate={
+                  expanded
+                    ? { y: 0, rotate: 0 }
+                    : {
+                        y: [0, -floatRange, 0, floatRange, 0],
+                        rotate: [restRotate, restRotate + 1.5, restRotate, restRotate - 1.5, restRotate],
+                      }
+                }
+                transition={
+                  expanded
+                    ? { duration: 0.4 }
+                    : { duration: 6 + i * 0.7, repeat: Infinity, ease: "easeInOut", delay: i * 0.4 + 1.5 }
+                }
+                className="bg-white p-3 pb-10 rounded-sm shadow-2xl w-3/4 aspect-[3/4] flex flex-col"
+              >
+                <img src={photo.image} alt={photo.caption} className="w-full flex-1 object-cover" />
+                <p className="mt-3 text-center font-bold text-xs font-sans text-black">{photo.caption}</p>
+              </motion.div>
+            </motion.div>
+          );
+        })}
+      </div>
+
+      {/* Tap hint */}
+      <AnimatePresence>
+        {!expanded && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: [0, 1, 1, 0.6, 1], y: [0, -4, 0] }}
+            exit={{ opacity: 0 }}
+            transition={{ delay: 2.5, duration: 2.5, repeat: Infinity, repeatDelay: 0.5 }}
+            className="absolute bottom-10 z-20 text-xs font-bold tracking-[0.3em] uppercase text-black/60"
+          >
+            Tap to spread
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
 }
 
 function AchievementsSlide({ bg, text, achievements, onComplete }: { bg: string; text: string; achievements: string[]; onComplete: () => void }) {
@@ -583,90 +756,7 @@ export default function Home() {
           </div>
 
           {/* Slide 6: Polaroids */}
-          <div className="w-full h-full snap-center snap-always flex flex-col items-center justify-center p-8 shrink-0 relative overflow-hidden" style={{ backgroundColor: SLIDES[6].bg, color: SLIDES[6].text }}>
-            {/* Background scrolling photo columns (infinite loop) */}
-            <div className="absolute inset-0 pointer-events-none flex justify-between opacity-40 z-0">
-              {/* Left column scrolling UP */}
-              <div className="w-[42%] h-full overflow-hidden relative">
-                <motion.div
-                  animate={{ y: ["0%", "-50%"] }}
-                  transition={{ duration: 28, repeat: Infinity, ease: "linear" }}
-                  className="flex flex-col gap-3 absolute top-0 left-0 right-0"
-                >
-                  {[...CONFIG.photos, ...CONFIG.photos, ...CONFIG.photos, ...CONFIG.photos].map((photo, i) => (
-                    <div key={`l-${i}`} className="bg-white p-2 pb-6 shadow-xl rounded-sm rotate-[-4deg]">
-                      <img src={photo.image} alt="" className="w-full aspect-[3/4] object-cover" />
-                    </div>
-                  ))}
-                </motion.div>
-              </div>
-              {/* Right column scrolling DOWN */}
-              <div className="w-[42%] h-full overflow-hidden relative">
-                <motion.div
-                  animate={{ y: ["-50%", "0%"] }}
-                  transition={{ duration: 32, repeat: Infinity, ease: "linear" }}
-                  className="flex flex-col gap-3 absolute top-0 left-0 right-0"
-                >
-                  {[...CONFIG.photos.slice().reverse(), ...CONFIG.photos.slice().reverse(), ...CONFIG.photos.slice().reverse(), ...CONFIG.photos.slice().reverse()].map((photo, i) => (
-                    <div key={`r-${i}`} className="bg-white p-2 pb-6 shadow-xl rounded-sm rotate-[4deg]">
-                      <img src={photo.image} alt="" className="w-full aspect-[3/4] object-cover" />
-                    </div>
-                  ))}
-                </motion.div>
-              </div>
-            </div>
-
-            {/* Soft vignette over background columns to keep focus on stack */}
-            <div className="absolute inset-0 bg-gradient-to-b from-[#F4F4F4]/70 via-[#F4F4F4]/30 to-[#F4F4F4]/70 z-0 pointer-events-none" />
-
-            <h2 className="absolute top-20 text-3xl font-black uppercase tracking-tighter w-full text-center z-20">The Highlights</h2>
-
-            <div className="relative w-full aspect-square mt-10 z-10">
-              {CONFIG.photos.map((photo, i) => {
-                const restRotate = (i % 2 === 0 ? 1 : -1) * (i * 4 + 2);
-                const floatRange = 6 + i * 2;
-                return (
-                  <motion.div
-                    key={i}
-                    initial={{
-                      opacity: 0,
-                      scale: 1.5,
-                      rotate: (Math.random() - 0.5) * 40,
-                      x: (Math.random() - 0.5) * 100,
-                      y: (Math.random() - 0.5) * 100,
-                    }}
-                    whileInView={{
-                      opacity: 1,
-                      scale: 1,
-                      rotate: restRotate,
-                      x: 0,
-                      y: 0,
-                    }}
-                    transition={{ delay: i * 0.3, type: "spring", bounce: 0.4 }}
-                    className="absolute inset-0 flex flex-col items-center justify-center"
-                    style={{ zIndex: i + 5 }}
-                  >
-                    <motion.div
-                      animate={{
-                        y: [0, -floatRange, 0, floatRange, 0],
-                        rotate: [restRotate, restRotate + 1.5, restRotate, restRotate - 1.5, restRotate],
-                      }}
-                      transition={{
-                        duration: 6 + i * 0.7,
-                        repeat: Infinity,
-                        ease: "easeInOut",
-                        delay: i * 0.4 + 1.5,
-                      }}
-                      className="bg-white p-4 pb-12 rounded-sm shadow-2xl w-3/4 aspect-[3/4] flex flex-col"
-                    >
-                      <img src={photo.image} alt={photo.caption} className="w-full flex-1 object-cover" />
-                      <p className="mt-4 text-center font-bold text-sm font-sans text-black">{photo.caption}</p>
-                    </motion.div>
-                  </motion.div>
-                );
-              })}
-            </div>
-          </div>
+          <PolaroidsSlide bg={SLIDES[6].bg} text={SLIDES[6].text} photos={CONFIG.photos} />
 
           {/* Marquee transition */}
           <div className="w-full snap-center snap-always py-12 shrink-0 bg-[#1DB954] text-black overflow-hidden flex items-center">
