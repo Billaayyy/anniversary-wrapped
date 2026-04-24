@@ -458,20 +458,15 @@ const SHARE_COL_A = [photo1, artist3, photo4, artist1, photo6, artist5, photo2, 
 const SHARE_COL_B = [artist4, photo3, artist2, photo5, artist1, photo1, artist3, photo6];
 const SHARE_COL_C = [photo2, artist5, photo3, artist4, photo1, artist3, photo5, artist2];
 
-function ShareBgColumn({ images, direction, duration, rotate }: {
+function ShareBgColumn({ images, cssClass, rotate }: {
   images: string[];
-  direction: "up" | "down";
-  duration: number;
+  cssClass: string;
   rotate: number;
 }) {
   const doubled = [...images, ...images];
   return (
-    <div className="relative h-full overflow-hidden" style={{ willChange: "transform" }}>
-      <motion.div
-        className="flex flex-col gap-2 absolute top-0 left-0 right-0"
-        animate={{ y: direction === "up" ? ["0%", "-50%"] : ["-50%", "0%"] }}
-        transition={{ duration, repeat: Infinity, ease: "linear" }}
-      >
+    <div className="relative h-full overflow-hidden">
+      <div className={`flex flex-col gap-2 absolute top-0 left-0 right-0 ${cssClass}`} style={{ willChange: "transform" }}>
         {doubled.map((src, i) => (
           <div
             key={i}
@@ -481,7 +476,7 @@ function ShareBgColumn({ images, direction, duration, rotate }: {
             <img src={src} alt="" loading="lazy" decoding="async" className="w-full aspect-square object-cover" />
           </div>
         ))}
-      </motion.div>
+      </div>
     </div>
   );
 }
@@ -601,9 +596,9 @@ function ShareScreen({ daysTogether, onClose, onRestart }: { daysTogether: numbe
     >
       {/* ── Scrolling photo background ── */}
       <div className="absolute inset-0 flex gap-2 opacity-35 pointer-events-none px-1">
-        <div className="flex-1"><ShareBgColumn images={SHARE_COL_A} direction="up"   duration={22} rotate={3} /></div>
-        <div className="flex-1"><ShareBgColumn images={SHARE_COL_B} direction="down" duration={28} rotate={2} /></div>
-        <div className="flex-1"><ShareBgColumn images={SHARE_COL_C} direction="up"   duration={18} rotate={4} /></div>
+        <div className="flex-1"><ShareBgColumn images={SHARE_COL_A} cssClass="share-scroll-up-mid"    rotate={3} /></div>
+        <div className="flex-1"><ShareBgColumn images={SHARE_COL_B} cssClass="share-scroll-down-slow" rotate={2} /></div>
+        <div className="flex-1"><ShareBgColumn images={SHARE_COL_C} cssClass="share-scroll-up-fast"   rotate={4} /></div>
       </div>
 
       {/* Dark gradient overlay so text is readable */}
@@ -697,9 +692,10 @@ export default function Home() {
   const chicagoRef = useRef<HTMLAudioElement | null>(null);
   const ollgRef    = useRef<HTMLAudioElement | null>(null);
   const fadeTimer  = useRef<ReturnType<typeof setInterval> | null>(null);
-  const prevSlide  = useRef<number>(0);
+  const prevSlide      = useRef<number>(0);
+  const houseUnlocked  = useRef(false);
 
-  // Create audio objects once on mount
+  // Create audio objects once on mount — do NOT call play() here, mobile blocks it
   useEffect(() => {
     const house   = new Audio(houseAudio);
     const chicago = new Audio(chicagoAudio);
@@ -711,34 +707,7 @@ export default function Home() {
     houseRef.current   = house;
     chicagoRef.current = chicago;
     ollgRef.current    = ollg;
-
-    // Fade house in on first user gesture (browsers block autoplay before interaction)
-    const startHouse = () => {
-      house.play().then(() => {
-        const target = 0.75;
-        const steps = 30;
-        let step = 0;
-        const t = setInterval(() => {
-          step++;
-          house.volume = Math.min(target, (target / steps) * step);
-          if (step >= steps) clearInterval(t);
-        }, 1500 / steps);
-      }).catch(() => {});
-      window.removeEventListener('touchstart', startHouse);
-      window.removeEventListener('mousedown', startHouse);
-      window.removeEventListener('keydown', startHouse);
-    };
-
-    window.addEventListener('touchstart', startHouse, { passive: true });
-    window.addEventListener('mousedown', startHouse);
-    window.addEventListener('keydown', startHouse);
-
-    return () => {
-      house.pause(); chicago.pause(); ollg.pause();
-      window.removeEventListener('touchstart', startHouse);
-      window.removeEventListener('mousedown', startHouse);
-      window.removeEventListener('keydown', startHouse);
-    };
+    return () => { house.pause(); chicago.pause(); ollg.pause(); };
   }, []);
 
   // React to slide changes
@@ -792,10 +761,10 @@ export default function Home() {
     } else if (activeSlide === 4) {
       if (!chicago.paused) { chicago.pause(); }
       house.pause();
-      ollg.currentTime = 56; // 0:00:56
+      ollg.currentTime = 0.56;
       fadeIn(ollg);
     } else {
-      const resumeHouse = () => house.play().catch(() => {});
+      const resumeHouse = () => { house.volume = 0.75; house.play().catch(() => {}); };
       if (prev === 2 && !chicago.paused) {
         fadeOut(chicago, 700, resumeHouse);
       } else if (prev === 4 && !ollg.paused) {
@@ -847,6 +816,21 @@ export default function Home() {
     const { scrollTop, clientHeight } = containerRef.current;
     const index = Math.round(scrollTop / clientHeight);
     setActiveSlide(index);
+
+    // First scroll is a real user gesture — mobile Safari allows play() here
+    const house = houseRef.current;
+    if (house && !houseUnlocked.current && index !== 2 && index !== 4) {
+      houseUnlocked.current = true;
+      house.volume = 0;
+      house.play().then(() => {
+        let s = 0;
+        const t = setInterval(() => {
+          s++;
+          house.volume = Math.min(0.75, (0.75 / 30) * s);
+          if (s >= 30) clearInterval(t);
+        }, 1500 / 30);
+      }).catch(() => {});
+    }
   };
 
   const daysTogether = useMemo(() => {
@@ -916,26 +900,10 @@ export default function Home() {
           ))}
         </div>
 
-        {/* Global Floating Elements */}
+        {/* Global Floating Elements — static to avoid blur+JS animation on mobile */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
-          <motion.div 
-            animate={{ 
-              rotate: 360,
-              scale: [1, 1.2, 1],
-              opacity: [0.3, 0.5, 0.3]
-            }}
-            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-            className="absolute -top-32 -left-32 w-96 h-96 bg-[#1DB954] rounded-full mix-blend-screen filter blur-[100px] opacity-30"
-          />
-          <motion.div 
-            animate={{ 
-              rotate: -360,
-              scale: [1, 1.5, 1],
-              opacity: [0.2, 0.4, 0.2]
-            }}
-            transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-            className="absolute -bottom-32 -right-32 w-96 h-96 bg-[#FF007F] rounded-full mix-blend-screen filter blur-[100px] opacity-20"
-          />
+          <div className="absolute -top-32 -left-32 w-96 h-96 bg-[#1DB954] rounded-full mix-blend-screen filter blur-[100px] opacity-30" />
+          <div className="absolute -bottom-32 -right-32 w-96 h-96 bg-[#FF007F] rounded-full mix-blend-screen filter blur-[100px] opacity-20" />
         </div>
 
         {/* Scroll Container */}
