@@ -33,20 +33,20 @@ const CONFIG = {
   
   // Slide 2: Top Songs (Title + Artist)
   topSongs: [
-    { title: "Midnight City Drives", artist: "Just Us", cover: album1 },
-    { title: "Sunday Morning Coffee", artist: "The Lazy Weekends", cover: album2 },
-    { title: "Laughing Too Loud", artist: "Inside Jokes", cover: album3 },
-    { title: "Holding Hands In Public", artist: "Unabashed", cover: album4 },
-    { title: "Forever & Always", artist: "Us", cover: album5 },
+    { title: "Chicago", artist: "Michael Jackson", cover: album1 },
+    { title: "Risk it All", artist: "Bruno Mars", cover: album2 },
+    { title: "Hotel Room Service", artist: "Pitbull", cover: album3 },
+    { title: "Beauty And A Beat", artist: "Justin Bieber, Nicki Minaj", cover: album4 },
+    { title: "Chocolate High", artist: "India.Arie", cover: album5 },
   ],
 
   // Slide 3: Top Artists (Moods/Seasons of the relationship)
   topArtists: [
-    { name: "Summer of 2023", streams: "8,402", image: artist1 },
-    { name: "Late Night Talks", streams: "6,210", image: artist2 },
-    { name: "Autumn Walks", streams: "5,930", image: artist3 },
-    { name: "Rainy Movie Days", streams: "4,105", image: artist4 },
-    { name: "Spring Picnics", streams: "3,890", image: artist5 },
+    { name: "The first 1 Week", streams: "8,402", image: artist1 },
+    { name: "1st year end", streams: "6,210", image: artist2 },
+    { name: "2024 stuff", streams: "5,930", image: artist3 },
+    { name: "It's 2025 already!", streams: "4,105", image: artist4 },
+    { name: "Present :)", streams: "3,890", image: artist5 },
   ],
 
   // Slide 4: Now Playing
