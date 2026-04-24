@@ -9,6 +9,7 @@ import album2 from "@/assets/images/album-2.png";
 import album3 from "@/assets/images/album-3.png";
 import album4 from "@/assets/images/album-4.png";
 import album5 from "@/assets/images/album-5.png";
+import album6 from "@/assets/images/album-6.png";
 
 import artist1 from "@/assets/images/artist-1.png";
 import artist2 from "@/assets/images/artist-2.png";
@@ -18,10 +19,16 @@ import artist5 from "@/assets/images/artist-5.png";
 
 import soundTownBg from "@/assets/images/sound-town.png";
 
-import photo1 from "@/assets/images/photo-1.png";
-import photo2 from "@/assets/images/photo-2.png";
-import photo3 from "@/assets/images/photo-3.png";
-import photo4 from "@/assets/images/photo-4.png";
+import houseAudio from "@/assets/audio/house.mp3";
+import chicagoAudio from "@/assets/audio/chicago.mp3";
+import ollgAudio from "@/assets/audio/ollg.mp3";
+
+import photo1 from "@/assets/images/photo1.png";
+import photo2 from "@/assets/images/photo2.png";
+import photo3 from "@/assets/images/photo3.png";
+import photo4 from "@/assets/images/photo4.png";
+import photo5 from "@/assets/images/photo5.png";
+import photo6 from "@/assets/images/photo6.png";
 
 // ============================================================================
 // 💝 EDIT THESE VARIABLES TO PERSONALIZE THE WRAPPED EXPERIENCE
@@ -42,18 +49,18 @@ const CONFIG = {
 
   // Slide 3: Top Artists (Moods/Seasons of the relationship)
   topArtists: [
-    { name: "The first 1 Week", streams: "8,402", image: artist1 },
-    { name: "1st year end", streams: "6,210", image: artist2 },
+    { name: "Present :)", streams: "8,402", image: artist5 }, 
+    { name: "It's 2025 already!", streams: "6,210", image: artist4 },
     { name: "2024 stuff", streams: "5,930", image: artist3 },
-    { name: "It's 2025 already!", streams: "4,105", image: artist4 },
-    { name: "Present :)", streams: "3,890", image: artist5 },
+    { name: "1st year end", streams: "4,105", image: artist2 },
+    { name: "The first 1 Week", streams: "3,890", image: artist1 }
   ],
 
   // Slide 4: Now Playing
   nowPlaying: {
-    song: "You & Me",
-    artist: "The Rest of Our Lives",
-    cover: album1
+    song: "One Less Lonely Girl",
+    artist: "Because you are my OLLG",
+    cover: album6
   },
 
   // Slide 5: Sound Town
@@ -65,19 +72,19 @@ const CONFIG = {
 
   // Slide 6: Polaroids
   photos: [
-    { image: photo1, caption: "That first sunset." },
-    { image: photo2, caption: "Always holding on." },
-    { image: photo3, caption: "Our usual spot." },
-    { image: photo4, caption: "Getting lost together." },
-    { image: album1, caption: "Late night drives." },
-    { image: artist1, caption: "Just us, golden hour." },
+    { image: photo1, caption: "The iconic photobox picture" },
+    { image: photo2, caption: "Going to the Dentist together" },
+    { image: photo3, caption: "Xixixixixixi <3" },
+    { image: photo4, caption: "Muach muach time" },
+    { image: photo5, caption: "What da girl doin?" },
+    { image: photo6, caption: "The first ever ride home." },
   ],
 
   // Slides 7-9: Stats
   stats: [
     { label: "Texts sent saying 'I Love You'", value: 14205, punchline: "And I meant it every single time." },
-    { label: "Reels, Shorts shared", value: 38491, punchline: "Mostly cats, cars, cute things and recipes that i said i can make that, but i can't." },
-    { label: "Kilometers traveled together", value: 28765, punchline: "And I'd walk 10,000 more just to see you smile." },
+    { label: "Reels & YT Shorts shared", value: 38491, punchline: "Mostly cats, cars, cute things and recipes that i said i can make that, but i can't." },
+    { label: "Kilometers traveled together", value: 18765, punchline: "And I'd walk 10,000 more just to see you smile." },
   ],
 
   topMoments: [
@@ -98,7 +105,7 @@ const CONFIG = {
   // Slide: Achievements unlocked together (checklist)
   achievements: [
     "Survived Covid-19",
-    "Adopted our first plant (and kept it alive)", //change it idk with what
+    "Tackle every downs to enjoy the ups", //change it idk with what
     "Built a thousand inside jokes",
     "Learned every one of each other's attack moves",
     "Met the families",
@@ -446,9 +453,394 @@ function AchievementsSlide({ bg, text, achievements, onComplete }: { bg: string;
   );
 }
 
+// Shuffled image pools for the share screen background columns
+const SHARE_COL_A = [photo1, artist3, photo4, artist1, photo6, artist5, photo2, artist2];
+const SHARE_COL_B = [artist4, photo3, artist2, photo5, artist1, photo1, artist3, photo6];
+const SHARE_COL_C = [photo2, artist5, photo3, artist4, photo1, artist3, photo5, artist2];
+
+function ShareBgColumn({ images, direction, duration, rotate }: {
+  images: string[];
+  direction: "up" | "down";
+  duration: number;
+  rotate: number;
+}) {
+  const doubled = [...images, ...images];
+  return (
+    <div className="relative h-full overflow-hidden" style={{ willChange: "transform" }}>
+      <motion.div
+        className="flex flex-col gap-2 absolute top-0 left-0 right-0"
+        animate={{ y: direction === "up" ? ["0%", "-50%"] : ["-50%", "0%"] }}
+        transition={{ duration, repeat: Infinity, ease: "linear" }}
+      >
+        {doubled.map((src, i) => (
+          <div
+            key={i}
+            className="bg-white p-1.5 pb-5 shadow-lg shrink-0"
+            style={{ transform: `rotate(${i % 2 === 0 ? rotate : -rotate}deg)` }}
+          >
+            <img src={src} alt="" loading="lazy" decoding="async" className="w-full aspect-square object-cover" />
+          </div>
+        ))}
+      </motion.div>
+    </div>
+  );
+}
+
+function ShareScreen({ daysTogether, onClose, onRestart }: { daysTogether: number; onClose: () => void; onRestart: () => void }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  const buildImage = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const W = 1080, H = 1080;
+    canvas.width = W;
+    canvas.height = H;
+    const ctx = canvas.getContext('2d')!;
+
+    // Background
+    const bg = ctx.createLinearGradient(0, H, W, 0);
+    bg.addColorStop(0,   '#0A1A0F');
+    bg.addColorStop(0.5, '#121212');
+    bg.addColorStop(1,   '#1a1a2e');
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, W, H);
+
+    // Green glow — top-left
+    const g1 = ctx.createRadialGradient(0, 0, 0, 0, 0, 500);
+    g1.addColorStop(0, 'rgba(29,185,84,0.45)');
+    g1.addColorStop(1, 'rgba(29,185,84,0)');
+    ctx.fillStyle = g1;
+    ctx.fillRect(0, 0, W, H);
+
+    // Pink glow — bottom-right
+    const g2 = ctx.createRadialGradient(W, H, 0, W, H, 540);
+    g2.addColorStop(0, 'rgba(255,0,127,0.3)');
+    g2.addColorStop(1, 'rgba(255,0,127,0)');
+    ctx.fillStyle = g2;
+    ctx.fillRect(0, 0, W, H);
+
+    ctx.textAlign = 'left';
+
+    // Logo dot
+    ctx.fillStyle = '#1DB954';
+    ctx.beginPath();
+    ctx.arc(80, 88, 22, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#000';
+    ctx.beginPath();
+    ctx.arc(80, 88, 10, 0, Math.PI * 2);
+    ctx.fill();
+
+    // WRAPPED
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = 'bold 30px system-ui, sans-serif';
+    ctx.fillText('WRAPPED', 120, 100);
+
+    // Big number
+    ctx.font = 'bold 320px system-ui, sans-serif';
+    ctx.fillText('3', 50, 520);
+
+    // YEARS
+    ctx.fillStyle = '#1DB954';
+    ctx.font = 'bold 110px system-ui, sans-serif';
+    ctx.fillText('YEARS', 60, 640);
+
+    // Names
+    ctx.fillStyle = 'rgba(255,255,255,0.9)';
+    ctx.font = 'bold 52px system-ui, sans-serif';
+    ctx.fillText(`${CONFIG.herName} & ${CONFIG.yourName}`, 60, 728);
+
+    // Divider
+    ctx.fillStyle = 'rgba(255,255,255,0.18)';
+    ctx.fillRect(60, 758, W - 120, 2);
+
+    // Stats
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = 'bold 44px system-ui, sans-serif';
+    ctx.fillText(`${daysTogether.toLocaleString()} days together`, 60, 828);
+
+    ctx.fillStyle = 'rgba(255,255,255,0.65)';
+    ctx.font = '36px system-ui, sans-serif';
+    ctx.fillText(`#1 Song: ${CONFIG.topSongs[0].title}`, 60, 882);
+    ctx.fillText(`Sound Town: ${CONFIG.soundTown.city}`, 60, 934);
+
+    // Bottom divider
+    ctx.fillStyle = 'rgba(255,255,255,0.12)';
+    ctx.fillRect(60, 964, W - 120, 2);
+
+    // Date
+    const since = new Date(CONFIG.anniversaryDate).toLocaleDateString('en-US', {
+      month: 'long', day: 'numeric', year: 'numeric',
+    });
+    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    ctx.font = '26px system-ui, sans-serif';
+    ctx.fillText(`Together since ${since}`, 60, 1014);
+
+    // Branding
+    ctx.textAlign = 'right';
+    ctx.fillStyle = 'rgba(255,255,255,0.2)';
+    ctx.font = '22px system-ui, sans-serif';
+    ctx.fillText('Anniversary Wrapped', W - 60, 1058);
+  };
+
+  const handleSave = () => {
+    buildImage();
+    const link = document.createElement('a');
+    link.download = 'anniversary-wrapped.png';
+    link.href = canvasRef.current!.toDataURL('image/png');
+    link.click();
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 1.2, ease: 'easeIn' }}
+      className="absolute inset-0 z-[100] flex flex-col overflow-hidden bg-black"
+    >
+      {/* ── Scrolling photo background ── */}
+      <div className="absolute inset-0 flex gap-2 opacity-35 pointer-events-none px-1">
+        <div className="flex-1"><ShareBgColumn images={SHARE_COL_A} direction="up"   duration={22} rotate={3} /></div>
+        <div className="flex-1"><ShareBgColumn images={SHARE_COL_B} direction="down" duration={28} rotate={2} /></div>
+        <div className="flex-1"><ShareBgColumn images={SHARE_COL_C} direction="up"   duration={18} rotate={4} /></div>
+      </div>
+
+      {/* Dark gradient overlay so text is readable */}
+      <div className="absolute inset-0 pointer-events-none" style={{
+        background: "linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.3) 40%, rgba(0,0,0,0.7) 100%)"
+      }} />
+
+      {/* Ambient colour glows on top of photos */}
+      <div className="absolute -top-20 -left-20 w-72 h-72 rounded-full bg-[#1DB954]/25 blur-3xl pointer-events-none" />
+      <div className="absolute -bottom-20 -right-20 w-72 h-72 rounded-full bg-[#FF007F]/20 blur-3xl pointer-events-none" />
+
+      {/* Card content */}
+      <motion.div
+        initial={{ scale: 0.94, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ duration: 1.0, delay: 0.35, ease: 'easeOut' }}
+        className="flex-1 flex flex-col justify-between p-8 pt-14 relative z-10"
+      >
+        {/* Header */}
+        <div className="flex items-center gap-2.5">
+          <div className="w-5 h-5 rounded-full bg-[#1DB954] flex items-center justify-center shrink-0">
+            <div className="w-2 h-2 rounded-full bg-black" />
+          </div>
+          <span className="text-white font-black tracking-[0.35em] text-xs drop-shadow">WRAPPED</span>
+        </div>
+
+        {/* Hero */}
+        <div className="-mt-2">
+          <div className="text-[9rem] font-black leading-none text-white tracking-tighter drop-shadow-2xl">3</div>
+          <div className="text-[3rem] font-black leading-none text-[#1DB954] tracking-tighter -mt-3 drop-shadow-xl">YEARS</div>
+          <div className="mt-5 text-xl font-bold text-white/90 drop-shadow">{CONFIG.herName} & {CONFIG.yourName}</div>
+        </div>
+
+        {/* Stats grid — frosted glass card */}
+        <div className="rounded-2xl bg-black/40 backdrop-blur-md border border-white/10 p-4 space-y-3">
+          <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+            <div>
+              <div className="text-2xl font-black text-white">{daysTogether.toLocaleString()}</div>
+              <div className="text-[10px] font-bold tracking-widest text-white/40 uppercase mt-0.5">Days Together</div>
+            </div>
+            <div>
+              <div className="text-base font-black text-white leading-snug">{CONFIG.topSongs[0].title}</div>
+              <div className="text-[10px] font-bold tracking-widest text-white/40 uppercase mt-0.5">#1 Song</div>
+            </div>
+            <div>
+              <div className="text-base font-black text-[#1DB954] leading-snug">{CONFIG.soundTown.city}</div>
+              <div className="text-[10px] font-bold tracking-widest text-white/40 uppercase mt-0.5">Sound Town</div>
+            </div>
+            <div>
+              <div className="text-base font-black text-white leading-snug">{CONFIG.topMoments[0]}</div>
+              <div className="text-[10px] font-bold tracking-widest text-white/40 uppercase mt-0.5">Top Memory</div>
+            </div>
+          </div>
+          <div className="h-px bg-white/10" />
+          <p className="text-xs text-white/35 font-medium">
+            Together since {new Date(CONFIG.anniversaryDate).toLocaleDateString('en-US', {
+              month: 'long', day: 'numeric', year: 'numeric',
+            })}
+          </p>
+        </div>
+
+        {/* CTAs */}
+        <div className="flex gap-3">
+          <button
+            onClick={handleSave}
+            className="flex-1 h-14 rounded-full bg-[#1DB954] text-black font-black text-sm flex items-center justify-center gap-2 shadow-xl shadow-[#1DB954]/30 active:scale-95 transition-transform"
+          >
+            <span>↓</span> Save Image
+          </button>
+          <button
+            onClick={onRestart}
+            className="flex-1 h-14 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 text-white font-black text-sm flex items-center justify-center gap-2 active:scale-95 transition-transform"
+          >
+            ↺ Start Over
+          </button>
+        </div>
+      </motion.div>
+
+      {/* Hidden canvas used for image generation */}
+      <canvas ref={canvasRef} className="hidden" />
+    </motion.div>
+  );
+}
+
 export default function Home() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [activeSlide, setActiveSlide] = useState(0);
+
+  // ── Audio ──────────────────────────────────────────────────────────────────
+  const houseRef   = useRef<HTMLAudioElement | null>(null);
+  const chicagoRef = useRef<HTMLAudioElement | null>(null);
+  const ollgRef    = useRef<HTMLAudioElement | null>(null);
+  const fadeTimer  = useRef<ReturnType<typeof setInterval> | null>(null);
+  const prevSlide  = useRef<number>(0);
+
+  // Create audio objects once on mount
+  useEffect(() => {
+    const house   = new Audio(houseAudio);
+    const chicago = new Audio(chicagoAudio);
+    const ollg    = new Audio(ollgAudio);
+    house.loop = chicago.loop = ollg.loop = true;
+    house.volume = 0;
+    chicago.volume = 0;
+    ollg.volume = 0;
+    houseRef.current   = house;
+    chicagoRef.current = chicago;
+    ollgRef.current    = ollg;
+
+    // Fade house in on first user gesture (browsers block autoplay before interaction)
+    const startHouse = () => {
+      house.play().then(() => {
+        const target = 0.75;
+        const steps = 30;
+        let step = 0;
+        const t = setInterval(() => {
+          step++;
+          house.volume = Math.min(target, (target / steps) * step);
+          if (step >= steps) clearInterval(t);
+        }, 1500 / steps);
+      }).catch(() => {});
+      window.removeEventListener('touchstart', startHouse);
+      window.removeEventListener('mousedown', startHouse);
+      window.removeEventListener('keydown', startHouse);
+    };
+
+    window.addEventListener('touchstart', startHouse, { passive: true });
+    window.addEventListener('mousedown', startHouse);
+    window.addEventListener('keydown', startHouse);
+
+    return () => {
+      house.pause(); chicago.pause(); ollg.pause();
+      window.removeEventListener('touchstart', startHouse);
+      window.removeEventListener('mousedown', startHouse);
+      window.removeEventListener('keydown', startHouse);
+    };
+  }, []);
+
+  // React to slide changes
+  useEffect(() => {
+    const prev = prevSlide.current;
+    prevSlide.current = activeSlide;
+
+    const house   = houseRef.current;
+    const chicago = chicagoRef.current;
+    const ollg    = ollgRef.current;
+    if (!house || !chicago || !ollg) return;
+
+    const clearFade = () => {
+      if (fadeTimer.current) { clearInterval(fadeTimer.current); fadeTimer.current = null; }
+    };
+
+    const fadeIn = (audio: HTMLAudioElement, target = 0.8, ms = 1500) => {
+      clearFade();
+      audio.volume = 0;
+      audio.play().catch(() => {});
+      const steps = 30;
+      let step = 0;
+      fadeTimer.current = setInterval(() => {
+        step++;
+        audio.volume = Math.min(target, (target / steps) * step);
+        if (step >= steps) clearFade();
+      }, ms / steps);
+    };
+
+    const fadeOut = (audio: HTMLAudioElement, ms = 700, onDone?: () => void) => {
+      clearFade();
+      const start = audio.volume;
+      const steps = 20;
+      let step = 0;
+      fadeTimer.current = setInterval(() => {
+        step++;
+        audio.volume = Math.max(0, start - (start / steps) * step);
+        if (step >= steps) {
+          clearFade();
+          audio.pause();
+          onDone?.();
+        }
+      }, ms / steps);
+    };
+
+    if (activeSlide === 2) {
+      if (!ollg.paused) ollg.pause();
+      house.pause();
+      chicago.currentTime = 24; // 0:00:24
+      fadeIn(chicago);
+    } else if (activeSlide === 4) {
+      if (!chicago.paused) { chicago.pause(); }
+      house.pause();
+      ollg.currentTime = 56; // 0:00:56
+      fadeIn(ollg);
+    } else {
+      const resumeHouse = () => house.play().catch(() => {});
+      if (prev === 2 && !chicago.paused) {
+        fadeOut(chicago, 700, resumeHouse);
+      } else if (prev === 4 && !ollg.paused) {
+        fadeOut(ollg, 700, resumeHouse);
+      } else {
+        if (!chicago.paused) chicago.pause();
+        if (!ollg.paused) ollg.pause();
+        if (house.paused) resumeHouse();
+      }
+    }
+  }, [activeSlide]);
+  // ──────────────────────────────────────────────────────────────────────────
+
+  // ── Share screen ───────────────────────────────────────────────────────────
+  const [showShare, setShowShare] = useState(false);
+  const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    const FINALE = SLIDES.length - 1;
+    if (activeSlide !== FINALE) {
+      setShowShare(false);
+      if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+      return;
+    }
+
+    const arm = () => {
+      if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+      idleTimerRef.current = setTimeout(() => setShowShare(true), 10000);
+    };
+
+    arm();
+    window.addEventListener('mousemove', arm);
+    window.addEventListener('touchstart', arm, { passive: true } as any);
+    window.addEventListener('touchmove', arm, { passive: true } as any);
+    window.addEventListener('keydown', arm);
+
+    return () => {
+      if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+      window.removeEventListener('mousemove', arm);
+      window.removeEventListener('touchstart', arm);
+      window.removeEventListener('touchmove', arm);
+      window.removeEventListener('keydown', arm);
+    };
+  }, [activeSlide]);
+  // ──────────────────────────────────────────────────────────────────────────
 
   const handleScroll = () => {
     if (!containerRef.current) return;
@@ -496,6 +888,20 @@ export default function Home() {
       {/* Mobile constraint wrapper */}
       <div className="w-full h-full max-w-[430px] relative bg-black overflow-hidden shadow-2xl sm:rounded-[2.5rem] sm:h-[90%] sm:my-auto sm:border-8 border-gray-900">
         
+        {/* Share Screen */}
+        <AnimatePresence>
+          {showShare && (
+            <ShareScreen
+              daysTogether={daysTogether}
+              onClose={() => setShowShare(false)}
+              onRestart={() => {
+                setShowShare(false);
+                containerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+            />
+          )}
+        </AnimatePresence>
+
         {/* Progress Bar */}
         <div className="absolute top-0 left-0 right-0 z-50 flex gap-1 p-3 pointer-events-none">
           {SLIDES.map((_, i) => (
